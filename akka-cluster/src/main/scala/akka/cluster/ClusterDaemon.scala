@@ -37,7 +37,7 @@ object ClusterUserAction {
    * Command to join the cluster. Sent when a node (represented by 'address')
    * wants to join another node (the receiver).
    */
-  case class Join(address: Address) extends ClusterMessage
+  case class Join(address: Address, roles: Set[String]) extends ClusterMessage
 
   /**
    * Command to leave the cluster.
@@ -288,20 +288,20 @@ private[cluster] final class ClusterCoreDaemon(publisher: ActorRef) extends Acto
   }
 
   def initialized: Actor.Receive = {
-    case msg: GossipEnvelope              ⇒ receiveGossip(msg)
-    case GossipTick                       ⇒ gossip()
-    case ReapUnreachableTick              ⇒ reapUnreachableMembers()
-    case LeaderActionsTick                ⇒ leaderActions()
-    case PublishStatsTick                 ⇒ publishInternalStats()
-    case InitJoin                         ⇒ initJoin()
-    case JoinTo(address)                  ⇒ join(address)
-    case ClusterUserAction.Join(address)  ⇒ joining(address)
-    case ClusterUserAction.Down(address)  ⇒ downing(address)
-    case ClusterUserAction.Leave(address) ⇒ leaving(address)
-    case Exit(address)                    ⇒ exiting(address)
-    case Remove(address)                  ⇒ removing(address)
-    case SendGossipTo(address)            ⇒ gossipTo(address)
-    case msg: SubscriptionMessage         ⇒ publisher forward msg
+    case msg: GossipEnvelope                    ⇒ receiveGossip(msg)
+    case GossipTick                             ⇒ gossip()
+    case ReapUnreachableTick                    ⇒ reapUnreachableMembers()
+    case LeaderActionsTick                      ⇒ leaderActions()
+    case PublishStatsTick                       ⇒ publishInternalStats()
+    case InitJoin                               ⇒ initJoin()
+    case JoinTo(address)                        ⇒ join(address)
+    case ClusterUserAction.Join(address, roles) ⇒ joining(address, roles)
+    case ClusterUserAction.Down(address)        ⇒ downing(address)
+    case ClusterUserAction.Leave(address)       ⇒ leaving(address)
+    case Exit(address)                          ⇒ exiting(address)
+    case Remove(address)                        ⇒ removing(address)
+    case SendGossipTo(address)                  ⇒ gossipTo(address)
+    case msg: SubscriptionMessage               ⇒ publisher forward msg
 
   }
 
@@ -366,16 +366,16 @@ private[cluster] final class ClusterCoreDaemon(publisher: ActorRef) extends Acto
 
       context.become(initialized)
       if (address == selfAddress)
-        joining(address)
+        joining(address, Roles)
       else
-        clusterCore(address) ! ClusterUserAction.Join(selfAddress)
+        clusterCore(address) ! ClusterUserAction.Join(selfAddress, Roles)
     }
   }
 
   /**
    * State transition to JOINING - new node joining.
    */
-  def joining(node: Address): Unit = {
+  def joining(node: Address, roles: Set[String]): Unit = {
     if (node.protocol != selfAddress.protocol)
       log.warning("Member with wrong protocol tried to join, but was ignored, expected [{}] but was [{}]",
         selfAddress.protocol, node.protocol)
@@ -396,7 +396,7 @@ private[cluster] final class ClusterCoreDaemon(publisher: ActorRef) extends Acto
 
         // add joining node as Joining
         // add self in case someone else joins before self has joined (Set discards duplicates)
-        val newMembers = localMembers + Member(node, Joining) + Member(selfAddress, Joining)
+        val newMembers = localMembers + Member(node, Joining, roles) + Member(selfAddress, Joining, cluster.settings.Roles)
         val newGossip = latestGossip copy (members = newMembers)
 
         val versionedGossip = newGossip :+ vclockNode
@@ -404,7 +404,7 @@ private[cluster] final class ClusterCoreDaemon(publisher: ActorRef) extends Acto
 
         latestGossip = seenVersionedGossip
 
-        log.info("Cluster Node [{}] - Node [{}] is JOINING", selfAddress, node)
+        log.info("Cluster Node [{}] - Node [{}] is JOINING, roles [{}]", selfAddress, node, roles.mkString(", "))
         if (node != selfAddress) {
           gossipTo(node)
         }
@@ -419,7 +419,7 @@ private[cluster] final class ClusterCoreDaemon(publisher: ActorRef) extends Acto
    */
   def leaving(address: Address): Unit = {
     if (latestGossip.members.exists(_.address == address)) { // only try to update if the node is available (in the member ring)
-      val newMembers = latestGossip.members map { member ⇒ if (member.address == address) Member(address, Leaving) else member } // mark node as LEAVING
+      val newMembers = latestGossip.members map { m ⇒ if (m.address == address) m.copy(status = Leaving) else m } // mark node as LEAVING
       val newGossip = latestGossip copy (members = newMembers)
 
       val versionedGossip = newGossip :+ vclockNode

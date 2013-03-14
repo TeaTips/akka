@@ -96,9 +96,9 @@ abstract class StatsSampleSpec extends MultiNodeSpec(StatsSampleSpecConfig)
       system.actorOf(Props[StatsService], "statsService")
 
       expectMsgAllOf(
-        MemberUp(Member(firstAddress, MemberStatus.Up)),
-        MemberUp(Member(secondAddress, MemberStatus.Up)),
-        MemberUp(Member(thirdAddress, MemberStatus.Up)))
+        MemberUp(Member(firstAddress, MemberStatus.Up, Set.empty)),
+        MemberUp(Member(secondAddress, MemberStatus.Up, Set.empty)),
+        MemberUp(Member(thirdAddress, MemberStatus.Up, Set.empty)))
 
       Cluster(system).unsubscribe(testActor)
 

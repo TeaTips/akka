@@ -64,11 +64,12 @@ abstract class FactorialFrontend2 extends UntypedActor {
   int totalInstances = 100;
   String routeesPath = "/user/statsWorker";
   boolean allowLocalRoutees = true;
+  String useRole = null;
   ActorRef backend = getContext().actorOf(
     new Props(FactorialBackend.class).withRouter(new ClusterRouterConfig(
-      new AdaptiveLoadBalancingRouter(HeapMetricsSelector.getInstance(), 0), 
+      new AdaptiveLoadBalancingRouter(HeapMetricsSelector.getInstance(), 0),
       new ClusterRouterSettings(
-        totalInstances, routeesPath, allowLocalRoutees))),
+        totalInstances, routeesPath, allowLocalRoutees, useRole))),
       "factorialBackendRouter2");
   //#router-lookup-in-code
 }
@@ -79,12 +80,13 @@ abstract class StatsService3 extends UntypedActor {
   int totalInstances = 100;
   int maxInstancesPerNode = 3;
   boolean allowLocalRoutees = false;
+  String useRole = null;
   ActorRef backend = getContext().actorOf(
     new Props(FactorialBackend.class).withRouter(new ClusterRouterConfig(
       new AdaptiveLoadBalancingRouter(
-        SystemLoadAverageMetricsSelector.getInstance(), 0), 
+        SystemLoadAverageMetricsSelector.getInstance(), 0),
       new ClusterRouterSettings(
-        totalInstances, maxInstancesPerNode, allowLocalRoutees))),
+        totalInstances, maxInstancesPerNode, allowLocalRoutees, useRole))),
       "factorialBackendRouter3");
   //#router-deploy-in-code
 }

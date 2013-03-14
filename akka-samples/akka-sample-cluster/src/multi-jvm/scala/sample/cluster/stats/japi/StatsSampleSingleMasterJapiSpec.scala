@@ -75,9 +75,9 @@ abstract class StatsSampleSingleMasterJapiSpec extends MultiNodeSpec(StatsSample
       Cluster(system) join node(first).address
 
       expectMsgAllOf(
-        MemberUp(Member(node(first).address, MemberStatus.Up)),
-        MemberUp(Member(node(second).address, MemberStatus.Up)),
-        MemberUp(Member(node(third).address, MemberStatus.Up)))
+        MemberUp(Member(node(first).address, MemberStatus.Up, Set.empty)),
+        MemberUp(Member(node(second).address, MemberStatus.Up, Set.empty)),
+        MemberUp(Member(node(third).address, MemberStatus.Up, Set.empty)))
 
       Cluster(system).unsubscribe(testActor)
 

@@ -248,7 +248,7 @@ abstract class StatsService2 extends Actor {
   val workerRouter = context.actorOf(Props[StatsWorker].withRouter(
     ClusterRouterConfig(ConsistentHashingRouter(), ClusterRouterSettings(
       totalInstances = 100, routeesPath = "/user/statsWorker",
-      allowLocalRoutees = true))),
+      allowLocalRoutees = true, useRole = None))),
     name = "workerRouter2")
   //#router-lookup-in-code
 }
@@ -263,7 +263,7 @@ abstract class StatsService3 extends Actor {
   val workerRouter = context.actorOf(Props[StatsWorker].withRouter(
     ClusterRouterConfig(ConsistentHashingRouter(), ClusterRouterSettings(
       totalInstances = 100, maxInstancesPerNode = 3,
-      allowLocalRoutees = false))),
+      allowLocalRoutees = false, useRole = None))),
     name = "workerRouter3")
   //#router-deploy-in-code
 }

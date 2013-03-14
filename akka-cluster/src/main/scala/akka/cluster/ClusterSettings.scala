@@ -50,6 +50,7 @@ class ClusterSettings(val config: Config, val systemName: String) {
   final val PublishStatsInterval: FiniteDuration = Duration(cc.getMilliseconds("publish-stats-interval"), MILLISECONDS)
   final val AutoJoin: Boolean = cc.getBoolean("auto-join")
   final val AutoDown: Boolean = cc.getBoolean("auto-down")
+  final val Roles: Set[String] = immutableSeq(cc.getStringList("roles")).toSet
   final val MinNrOfMembers: Int = {
     cc.getInt("min-nr-of-members")
   } requiring (_ > 0, "min-nr-of-members must be > 0")

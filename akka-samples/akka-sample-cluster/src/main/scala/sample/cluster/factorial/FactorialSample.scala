@@ -144,7 +144,7 @@ abstract class FactorialFrontend2 extends Actor {
     ClusterRouterConfig(AdaptiveLoadBalancingRouter(HeapMetricsSelector),
       ClusterRouterSettings(
         totalInstances = 100, routeesPath = "/user/statsWorker",
-        allowLocalRoutees = true))),
+        allowLocalRoutees = true, useRole = None))),
     name = "factorialBackendRouter2")
   //#router-lookup-in-code
 }
@@ -161,7 +161,7 @@ abstract class FactorialFrontend3 extends Actor {
     ClusterRouterConfig(AdaptiveLoadBalancingRouter(
       SystemLoadAverageMetricsSelector), ClusterRouterSettings(
       totalInstances = 100, maxInstancesPerNode = 3,
-      allowLocalRoutees = false))),
+      allowLocalRoutees = false, useRole = None))),
     name = "factorialBackendRouter3")
   //#router-deploy-in-code
 }
